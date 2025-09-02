@@ -1,6 +1,4 @@
-// const { get } = require("express/lib/response");
-
-//DOM ELements
+//DOM Elements
 const hourEl = document.querySelector(".hour");
 const minuteEl = document.querySelector(".minute");
 const valueEl = document.querySelector(".value");
@@ -39,151 +37,147 @@ const numberElarray = [
   number9El,
 ];
 
-//varibles
-let valueStrInMemory = null;
-let operatorInMemory = null;
+// 🔹 Expression to build as user types
+let expression = "";
 
-//functions
-const getValueAsStr = () => valueEl.textContent.split(",").join("");
-
-const getValueAsNum = () => {
-  return parseFloat(getValueAsStr());
-};
-
-const setStrAsValue = (valueStr) => {
-  if(valueStr[valueStr.length - 1] === '.'){
-    valueEl.textContent += '.';
-    return;
-  }
-  const [wholeNumStr, decimalStr] = valueStr.split(".");
-  if (decimalStr) {
-    valueEl.textContent =
-      parseFloat(wholeNumStr).toLocaleString() + "." + decimalStr;
-  } else {
-    valueEl.textContent = parseFloat(wholeNumStr).toLocaleString();
-  }
-};
-
+// ---- Functions ----
 const handleNumberClick = (numStr) => {
-  const currentValueStr = getValueAsStr();
-  if (currentValueStr === "0") {
-    setStrAsValue(numStr);
-  } else {
-    setStrAsValue(currentValueStr + numStr);
-  }
+  expression += numStr;
+  valueEl.textContent = expression;
+  adjustFontSize();
 };
 
+const handleOperatorClick = (operation) => {
+  let opSymbol = "";
+  if (operation === "addition") opSymbol = "+";
+  if (operation === "subtraction") opSymbol = "-";
+  if (operation === "multiplication") opSymbol = "*";
+  if (operation === "division") opSymbol = "/";
 
-const getResultOfOperationAsStr = () => {
-    const currentValueNum = getValueAsNum();
-    const valueNumInMemory = parseFloat(valueStrInMemory);
-  let newValueNum;
-     if (operatorInMemory === "addition") {
-    newValueNum = parseFloat(valueStrInMemory) + currentValueNum;
-  } else if (operatorInMemory === "subtraction") {
-    newValueNum = parseFloat(valueStrInMemory) - currentValueNum;
-  } else if (operatorInMemory === "multiplication") {
-    newValueNum = parseFloat(valueStrInMemory) * currentValueNum;
-  } else if (operatorInMemory === "division") {
-    newValueNum = parseFloat(valueStrInMemory) / currentValueNum;
-  }
-  return newValueNum.toString();
+  expression += opSymbol;
+  valueEl.textContent = expression;
 };
 
-
-
-
-const handleOperatorClick=(operation) => {
-  const currentValueStr = getValueAsStr();
-  if (!valueStrInMemory) {
-    valueStrInMemory = currentValueStr
-    operatorInMemory = operation;
-    setStrAsValue("0");
-    return;
-  }
-  valueStrInMemory = getResultOfOperationAsStr();
-  operatorInMemory = operation;
-  setStrAsValue('0');
-};
-
-
-//add listerners to function buttons
+// ---- Button Listeners ----
 acEl.addEventListener("click", () => {
-  setStrAsValue("0");
-  valueStrInMemory = null;
-  operatorInMemory = null;
+  expression = "";
+  valueEl.textContent = "0";
 });
+
 pmEl.addEventListener("click", () => {
-  const currentValueNum = getValueAsNum();
-  const currentValueStr = getValueAsStr();
-  if (currentValueStr === "-0") {
-    setStrAsValue("0");
-    return;
-  }
-  if (currentValueNum >=  0) {
-    setStrAsValue("-" + currentValueNum.toString());
-  } else {
-    setStrAsValue(currentValueStr.substring(1));
+  if (expression) {
+    if (expression.startsWith("-")) {
+      expression = expression.substring(1);
+    } else {
+      expression = "-" + expression;
+    }
+    valueEl.textContent = expression;
   }
 });
+
 percentEl.addEventListener("click", () => {
-  const currentValueNum = getValueAsNum();
-  const newValueNum = currentValueNum / 100;
-  setStrAsValue(newValueNum.toString());
-  valueStrInMemory = null;
-  operatorInMemory = null;
-});
-
-//add event listeners to operators
-additionEl.addEventListener("click", () => {
-  handleOperatorClick("addition");
-});
-subtractionEl.addEventListener("click", () => {
-  handleOperatorClick("subtraction");
-});
-multiplicationEl.addEventListener("click", () => {
-  handleOperatorClick("multiplication");  
-});
-divisionEl.addEventListener("click", () => { 
-  handleOperatorClick("division");
-});
-equalEl.addEventListener("click", () => {
-  if (valueStrInMemory) {
-    setStrAsValue(getResultOfOperationAsStr());
-    valueStrInMemory = null;
-    operatorInMemory = null;
+  try {
+    expression = (eval(expression) / 100).toString();
+    valueEl.textContent = expression;
+  } catch {
+    valueEl.textContent = "Error";
+    expression = "";
   }
 });
 
+additionEl.addEventListener("click", () => handleOperatorClick("addition"));
+subtractionEl.addEventListener("click", () =>
+  handleOperatorClick("subtraction")
+);
+multiplicationEl.addEventListener("click", () =>
+  handleOperatorClick("multiplication")
+);
+divisionEl.addEventListener("click", () => handleOperatorClick("division"));
 
-//add event listeners to numbers and buttons
+equalEl.addEventListener("click", () => {
+  try {
+    const result = eval(expression);
+    valueEl.textContent = result;
+    expression = result.toString();
+  } catch {
+    valueEl.textContent = "Error";
+    expression = "";
+    adjustFontSize();
+  }
+});
+
+// ---- Numbers + Decimal ----
 for (let i = 0; i < numberElarray.length; i++) {
   const numberEl = numberElarray[i];
-  numberEl.addEventListener("click", () => {
-    handleNumberClick(i.toString());
-  });
+  numberEl.addEventListener("click", () => handleNumberClick(i.toString()));
 }
 
-decimalEl.addEventListener('click', () => {
-  const currentValueStr = getValueAsStr();
-  if (!currentValueStr.includes('.')) {
-    setStrAsValue(currentValueStr + '.')
+decimalEl.addEventListener("click", () => {
+  if (!expression.includes(".")) {
+    expression += ".";
+    valueEl.textContent = expression;
   }
 });
 
-//set uo the time
+// ---- Clock ----
 const updateTime = () => {
   const currentTime = new Date();
-
   let currentHour = currentTime.getHours();
   const currentMinute = currentTime.getMinutes();
 
-  if (currentHour > 12) {
-    currentHour -= 12;
-  }
+  if (currentHour > 12) currentHour -= 12;
 
   hourEl.textContent = currentHour;
   minuteEl.textContent = currentMinute.toString().padStart(2, "0");
 };
 setInterval(updateTime, 1000);
 updateTime();
+
+// ---- Keyboard Support ----
+document.addEventListener("keydown", (event) => {
+  const key = event.key;
+
+  if (!isNaN(key)) handleNumberClick(key);
+  if (key === ".") handleNumberClick(".");
+  if (key === "+") handleOperatorClick("addition");
+  if (key === "-") handleOperatorClick("subtraction");
+  if (key === "*") handleOperatorClick("multiplication");
+  if (key === "/") handleOperatorClick("division");
+
+  if (key === "Enter" || key === "=") {
+    try {
+      const result = eval(expression);
+      valueEl.textContent = result;
+      expression = result.toString();
+    } catch {
+      valueEl.textContent = "Error";
+      expression = "";
+    }
+  }
+
+  if (key === "Backspace") {
+    expression = expression.slice(0, -1);
+    valueEl.textContent = expression || "0";
+  }
+
+  if (key === "Escape") {
+    expression = "";
+    valueEl.textContent = "0";
+  }
+});
+function adjustFontSize() {
+  const maxFontSize = 130; // starting size
+  const minFontSize = 40; // don’t shrink too tiny
+  const containerWidth = valueEl.offsetWidth;
+
+  // reset to max first
+  valueEl.style.fontSize = maxFontSize + "px";
+
+  // shrink until it fits
+  while (
+    valueEl.scrollWidth > containerWidth &&
+    parseInt(valueEl.style.fontSize) > minFontSize
+  ) {
+    valueEl.style.fontSize = parseInt(valueEl.style.fontSize) - 2 + "px";
+  }
+}
