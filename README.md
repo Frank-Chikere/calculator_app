@@ -1,7 +1,7 @@
 # 🧮 Calculator Project  
 
 ## 📌 Overview  
-This is a simple **Calculator Web App** built with **HTML, CSS, and JavaScript**.  
+This is a simple ** Iphone Calculator (replica) Web App** built with **HTML, CSS, and JavaScript**.  
 It allows users to perform basic arithmetic operations with a clean and responsive user interface.  
 
 ---
